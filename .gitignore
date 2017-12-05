@@ -5,6 +5,14 @@ ehthumbs.db
 # Folder config file
 Desktop.ini
 
+#Folder data
+dataTrain/
+dataTrain_10/
+
+#Folder model
+final_model_5/
+final_model_10/
+
 # Recycle Bin used on file shares
 $RECYCLE.BIN/
 
