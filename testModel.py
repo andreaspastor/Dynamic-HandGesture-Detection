@@ -22,6 +22,7 @@ def new_conv_layer(name,input,              # The previous layer.
                    num_input_channels, # Num. channels in prev. layer.
                    filter_size,        # Width and height of each filter.
                    num_filters,        # Number of filters.
+                   dropout,            # Dropout rate
                    use_pooling=True):  # Use 2x2 max-pooling.
 
     shape = [filter_size, filter_size, num_input_channels, num_filters]
@@ -74,21 +75,22 @@ num_filters1 = 32
 num_filters2 = 64
 num_filters3 = 128
 
-
-n_classes = 15
+n_images = 5
+n_classes = 5
 batch_size = 256
 imgSize = 64
 
-x = tf.placeholder(tf.float32, [None, imgSize, imgSize])
-x_image = tf.reshape(x, [-1, imgSize, imgSize, 1])
+x = tf.placeholder(tf.float32, [None, imgSize, imgSize, n_images])
+x_image = tf.reshape(x, [-1, imgSize, imgSize, n_images])
 y = tf.placeholder(tf.float32)
 keep_prob = tf.placeholder(tf.float32)
 
 layer_conv1a, weights_conv1a = \
     new_conv_layer("conv1a",input=x_image,
-                   num_input_channels=1,
+                   num_input_channels=n_images,
                    filter_size=filter_size1,
                    num_filters=num_filters1,
+                   dropout=keep_prob,
                    use_pooling=False)
 
 layer_conv1a1, weights_conv1a1 = \
@@ -96,6 +98,7 @@ layer_conv1a1, weights_conv1a1 = \
                    num_input_channels=num_filters1,
                    filter_size=filter_size1,
                    num_filters=num_filters1,
+                   dropout=keep_prob,
                    use_pooling=True)
 
 layer_conv1b, weights_conv1b = \
@@ -103,6 +106,7 @@ layer_conv1b, weights_conv1b = \
                    num_input_channels=num_filters1,
                    filter_size=filter_size1,
                    num_filters=num_filters1,
+                   dropout=keep_prob,
                    use_pooling=False)
 
 layer_conv1b1, weights_conv1b1 = \
@@ -110,6 +114,7 @@ layer_conv1b1, weights_conv1b1 = \
                    num_input_channels=num_filters1,
                    filter_size=filter_size1,
                    num_filters=num_filters1,
+                   dropout=keep_prob,
                    use_pooling=True)
 
 layer_conv1c, weights_conv1c = \
@@ -117,6 +122,7 @@ layer_conv1c, weights_conv1c = \
                    num_input_channels=num_filters1,
                    filter_size=filter_size1,
                    num_filters=num_filters1,
+                   dropout=keep_prob,
                    use_pooling=False)
 
 layer_conv1c1, weights_conv1c1 = \
@@ -124,6 +130,7 @@ layer_conv1c1, weights_conv1c1 = \
                    num_input_channels=num_filters1,
                    filter_size=filter_size1,
                    num_filters=num_filters1,
+                   dropout=keep_prob,
                    use_pooling=True)
 
 layer_flat, num_features = flatten_layer(layer_conv1c1)
@@ -140,141 +147,44 @@ print(layer_conv1a)
 print(layer_flat)
 print(layer_f)
 
-
-
 correct = tf.equal(tf.argmax(layer_f, 1), tf.argmax(y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
 
-
 saver = tf.train.Saver()
-save_dir = 'final_model_15_16/'
+save_dir = 'final_model_5/'
 if not os.path.exists(save_dir):
     os.makedirs(save_dir)
 save_path = os.path.join(save_dir, 'best_model')
 
 
+gestures = ['Swuping Left', 'Swiping Right', 'Swiping Down', \
+            'Swiping Up', 'Doing other things']
 
-
-
-
-
-# direct inputs
-# source to this solution and code:
-# http://stackoverflow.com/questions/14489013/simulate-python-keypresses-for-controlling-a-game
-# http://www.gamespp.com/directx/directInputKeyboardScanCodes.html
-
-
-
-SendInput = ctypes.windll.user32.SendInput
-
-
-W = 0x11
-A = 0x1E
-S = 0x1F
-D = 0x20
-
-# C struct redefinitions 
-PUL = ctypes.POINTER(ctypes.c_ulong)
-class KeyBdInput(ctypes.Structure):
-    _fields_ = [("wVk", ctypes.c_ushort),
-                ("wScan", ctypes.c_ushort),
-                ("dwFlags", ctypes.c_ulong),
-                ("time", ctypes.c_ulong),
-                ("dwExtraInfo", PUL)]
-
-class HardwareInput(ctypes.Structure):
-    _fields_ = [("uMsg", ctypes.c_ulong),
-                ("wParamL", ctypes.c_short),
-                ("wParamH", ctypes.c_ushort)]
-
-class MouseInput(ctypes.Structure):
-    _fields_ = [("dx", ctypes.c_long),
-                ("dy", ctypes.c_long),
-                ("mouseData", ctypes.c_ulong),
-                ("dwFlags", ctypes.c_ulong),
-                ("time",ctypes.c_ulong),
-                ("dwExtraInfo", PUL)]
-
-class Input_I(ctypes.Union):
-    _fields_ = [("ki", KeyBdInput),
-                 ("mi", MouseInput),
-                 ("hi", HardwareInput)]
-
-class Input(ctypes.Structure):
-    _fields_ = [("type", ctypes.c_ulong),
-                ("ii", Input_I)]
-
-# Actuals Functions
-
-def PressKey(hexKeyCode):
-    extra = ctypes.c_ulong(0)
-    ii_ = Input_I()
-    ii_.ki = KeyBdInput( 0, hexKeyCode, 0x0008, 0, ctypes.pointer(extra) )
-    x = Input( ctypes.c_ulong(1), ii_ )
-    ctypes.windll.user32.SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
-
-def ReleaseKey(hexKeyCode):
-    extra = ctypes.c_ulong(0)
-    ii_ = Input_I()
-    ii_.ki = KeyBdInput( 0, hexKeyCode, 0x0008 | 0x0002, 0, ctypes.pointer(extra) )
-    x = Input( ctypes.c_ulong(1), ii_ )
-    ctypes.windll.user32.SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
-
-def sliding():
-    PressKey(0x38)
-    PressKey(0x0F)
-    time.sleep(1)
-    ReleaseKey(0x0F)
-
-    ret, image_np = cap.read()
-    
-    cv2.imshow('object detection', cv2.resize(image_np, (400,300)))
-    gray_image = cv2.cvtColor(cv2.resize(image_np, (imgSize,imgSize)), cv2.COLOR_BGR2GRAY)
-    t2 = time.time()
-
-    result = np.argmax(y_pred.eval({x:[gray_image]})) + 1
-
-    while result == 5:
-	    PressKey(0x0F)
-	    time.sleep(1)
-	    ReleaseKey(0x0F)
-	    ret, image_np = cap.read()
-	    cv2.imshow('object detection', cv2.resize(image_np, (400,300)))
-	    gray_image = cv2.cvtColor(cv2.resize(image_np, (imgSize,imgSize)), cv2.COLOR_BGR2GRAY)
-
-	    result = np.argmax(y_pred.eval({x:[gray_image]})) + 1
-	    print(result)
-
-    PressKey(0x1C)
-    ReleaseKey(0x38)
-    ReleaseKey(0x1C)
-    time.sleep(1)
-    return None
-
-
-gestures = ['None', 'fist', 'thumb up', 'thumb down', \
-            'stop', 'catch', 'swing', 'phone', 'victory', \
-            'C', 'okay', '2 fingers', '2 fingers horiz', \
-            'rock&roll', 'rock&roll horiz']
-
-liste = glob.glob('./image/**')
 cap = cv2.VideoCapture(0)
 t = time.time()
 with tf.Session() as sess:
   sess.run(tf.global_variables_initializer())
   saver.restore(sess=sess, save_path=save_path)
-  for elm in liste[::-10]:
+  imgs = [np.zeros((imgSize,imgSize)) for x in range(5)]
+  while True:
     ret, image_np = cap.read()
-    #image_np = cv2.imread(elm)
+
     cv2.imshow('object detection', cv2.resize(image_np, (400,300)))
     gray_image = cv2.cvtColor(cv2.resize(image_np, (imgSize,imgSize)), cv2.COLOR_BGR2GRAY)
-    t2 = time.time()
     gray_image = cv2.equalizeHist(gray_image)
-    result = np.argmax(y_pred.eval({x:[gray_image]}))
+    imgs.append(gray_image)
+    imgs = imgs[-5:]
+    t2 = time.time()
+    result = y_pred.eval({x:[np.dstack(imgs)], keep_prob: 1})
 
-    print(gestures[result], 1/(time.time() - t), 1/(time.time() - t2))
+    if np.max(result) > 0.7:
+      print(gestures[np.argmax(result)], 1/(time.time() - t), 1/(time.time() - t2))
+    else:
+      print(1/(time.time() - t), 1/(time.time() - t2))
     
+    waitTime = int((0.3 - time.time() + t)*1000)
+    waitTime = 1 if waitTime < 0 else waitTime
     t = time.time()
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    if cv2.waitKey(waitTime) & 0xFF == ord('q'):
       cv2.destroyAllWindows()
       break

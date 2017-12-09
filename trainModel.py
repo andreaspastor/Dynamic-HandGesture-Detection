@@ -170,8 +170,8 @@ print(layer_flat)
 print(layer_f)
 
 rate = tf.placeholder(tf.float32, shape=[])
-l_rate = 0.001#5e-4
-drop_rate = 0.75
+l_rate = 0.0001#5e-4
+drop_rate = 0.80
 beta = 0.001
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=layer_f,labels=y)) \
      + beta * (tf.nn.l2_loss(weights_f))
