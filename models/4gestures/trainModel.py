@@ -171,7 +171,7 @@ print(layer_f)
 
 rate = tf.placeholder(tf.float32, shape=[])
 l_rate = 0.0001#5e-4
-drop_rate = 0.80
+drop_rate = 0.75
 beta = 0.001
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=layer_f,labels=y)) \
      + beta * (tf.nn.l2_loss(weights_f))
@@ -213,7 +213,8 @@ with tf.Session() as sess:
 
     tempsEcoule = time() - t
 
-    sys.stdout.write('\rEpoch : ' + str(epoch) + ' Loss : ' + str(epoch_loss) + ' Batch size : ' + str(batch_size) + ' LRate : ' + str(l_rate) + ' Time : ' + str(tempsEcoule))
+    sys.stdout.write('\rEpoch : ' + str(epoch) + ' Loss : ' + str(epoch_loss) + ' Batch size : ' + str(batch_size) \
+       + ' LRate : ' + str(l_rate) + ' DropRate : ' + str(drop_rate) + ' Time : ' + str(tempsEcoule))
     sys.stdout.write('\nTrain : ' + str(res2) + ' Test : ' + str(res3))
     for no in range(n_classes):
       sys.stdout.write(' Test class' + str(no) + ' : ' + str(res[no]))

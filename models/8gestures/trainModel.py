@@ -9,12 +9,12 @@ import pickle
 import sys
 
 def recup(folder):
-  X_train = pickle.load(open('./'+ folder + '/Xtrain.dump', 'rb'))
-  X_test = pickle.load(open('./'+ folder + '/Xtest.dump', 'rb'))
-  y_test = pickle.load(open('./'+ folder + '/Ytest.dump', 'rb'))
-  y_train = pickle.load(open('./'+ folder + '/Ytrain.dump', 'rb'))
-  X_testClass = pickle.load(open('./'+ folder + '/XtestClass.dump', 'rb'))
-  y_testClass = pickle.load(open('./'+ folder + '/YtestClass.dump', 'rb'))
+  X_train = np.load('./'+ folder + '/Xtrain.npy')
+  X_test = np.load('./'+ folder + '/Xtest.npy')
+  y_test = np.load('./'+ folder + '/Ytest.npy')
+  y_train = np.load('./'+ folder + '/Ytrain.npy')
+  X_testClass = np.load('./'+ folder + '/XtestClass.npy')
+  y_testClass = np.load('./'+ folder + '/YtestClass.npy')
   return X_train, y_train, X_test, y_test, X_testClass, y_testClass
 
 def new_weights_conv(name,shape):
@@ -32,6 +32,7 @@ def new_conv_layer(name,input,              # The previous layer.
                    num_input_channels, # Num. channels in prev. layer.
                    filter_size,    # Width and height of each filter.
                    num_filters,    # Number of filters.
+                   dropout,    # Dropout rate
                    use_pooling=True): # Use 2x2 max-pooling.
 
     shape = [filter_size, filter_size, num_input_channels, num_filters]
@@ -55,7 +56,8 @@ def new_conv_layer(name,input,              # The previous layer.
                                strides=[1, 2, 2, 1],
                                padding='SAME')
     layer = tf.nn.relu(layer)
-    return layer, weights
+    layer_drop = tf.nn.dropout(layer, dropout)
+    return layer_drop, weights
   
 def flatten_layer(layer):
     # Get the shape of the input layer.
@@ -94,10 +96,11 @@ num_filters2 = 64
 num_filters3 = 128
 
 n_images = 5
-n_classes = 27
-batch_size = 256
+n_classes = 9
+batch_size = 196
 imgSize = 64
 
+keep_prob = tf.placeholder(tf.float32, shape=[])
 x = tf.placeholder(tf.float32, [None, imgSize, imgSize, n_images])
 x_image = tf.reshape(x, [-1, imgSize, imgSize, n_images])
 y = tf.placeholder(tf.float32)
@@ -108,6 +111,7 @@ layer_conv1a, weights_conv1a = \
                    num_input_channels=n_images,
                    filter_size=filter_size1,
                    num_filters=num_filters1,
+                   dropout=keep_prob,
                    use_pooling=False)
 
 layer_conv1a1, weights_conv1a1 = \
@@ -115,34 +119,39 @@ layer_conv1a1, weights_conv1a1 = \
                    num_input_channels=num_filters1,
                    filter_size=filter_size1,
                    num_filters=num_filters1,
+                   dropout=keep_prob,
                    use_pooling=True)
 
 layer_conv1b, weights_conv1b = \
     new_conv_layer("conv1b",input=layer_conv1a1,
                    num_input_channels=num_filters1,
                    filter_size=filter_size1,
-                   num_filters=num_filters1,
+                   num_filters=num_filters2,
+                   dropout=keep_prob,
                    use_pooling=False)
 
 layer_conv1b1, weights_conv1b1 = \
     new_conv_layer("conv1b1",input=layer_conv1b,
-                   num_input_channels=num_filters1,
+                   num_input_channels=num_filters2,
                    filter_size=filter_size1,
-                   num_filters=num_filters1,
+                   num_filters=num_filters2,
+                   dropout=keep_prob,
                    use_pooling=True)
 
 layer_conv1c, weights_conv1c = \
     new_conv_layer("conv1c",input=layer_conv1b1,
-                   num_input_channels=num_filters1,
+                   num_input_channels=num_filters2,
                    filter_size=filter_size1,
-                   num_filters=num_filters1,
+                   num_filters=num_filters2,
+                   dropout=keep_prob,
                    use_pooling=False)
 
 layer_conv1c1, weights_conv1c1 = \
     new_conv_layer("conv1c1",input=layer_conv1c,
-                   num_input_channels=num_filters1,
+                   num_input_channels=num_filters2,
                    filter_size=filter_size1,
-                   num_filters=num_filters1,
+                   num_filters=num_filters2,
+                   dropout=keep_prob,
                    use_pooling=True)
 
 layer_flat, num_features = flatten_layer(layer_conv1c1)
@@ -161,7 +170,8 @@ print(layer_flat)
 print(layer_f)
 
 rate = tf.placeholder(tf.float32, shape=[])
-l_rate = 0.0003#5e-4
+l_rate = 0.008#5e-4
+drop_rate = 0.95
 beta = 0.001
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=layer_f,labels=y)) \
      + beta * (tf.nn.l2_loss(weights_f))
@@ -183,19 +193,19 @@ compteur = 0
 prec = 10e100
 with tf.Session() as sess:
   sess.run(tf.global_variables_initializer())
-  saver.restore(sess=sess, save_path=save_path)
-  res2 = accuracy.eval({x:X_train[:batch_size], y:y_train[:batch_size]})
-  res3 = accuracy.eval({x:X_test[:batch_size], y:y_test[:batch_size]})
+  #saver.restore(sess=sess, save_path=save_path)
+  res2 = accuracy.eval({x:X_train[:batch_size], y:y_train[:batch_size], keep_prob: 1})
+  res3 = accuracy.eval({x:X_test[:batch_size], y:y_test[:batch_size], keep_prob: 1})
   res, epoch = [0 for x in range(n_classes)], 0
   for no in range(n_classes):
     print(no)
-    res[no] = accuracy.eval({x:X_testClass[no][:batch_size], y:y_testClass[no][:batch_size]})
+    res[no] = accuracy.eval({x:X_testClass[no][:batch_size], y:y_testClass[no][:batch_size], keep_prob: 1})
       
   while epoch < hm_epochs and sum(res)/len(res) < 0.99:
     epoch_loss = 0
     epoch += 1
     for g in range(0,len(X_train),batch_size):
-      _, c = sess.run([optimizer, cost], feed_dict={keep_prob: 1, rate: l_rate, x: X_train[g:g+batch_size], y: y_train[g:g+batch_size]})
+      _, c = sess.run([optimizer, cost], feed_dict={keep_prob: 1, rate: l_rate, x: X_train[g:g+batch_size], y: y_train[g:g+batch_size], keep_prob: drop_rate})
       
       sys.stdout.write('\r' + str(g) + '/' + str(len(X_train)))
       sys.stdout.flush()
@@ -203,7 +213,8 @@ with tf.Session() as sess:
 
     tempsEcoule = time() - t
 
-    sys.stdout.write('\r\nEpoch : ' + str(epoch) + ' Loss : ' + str(epoch_loss) + ' Batch size : ' + str(batch_size) + ' LRate : ' + str(l_rate) + ' Time : ' + str(tempsEcoule))
+    sys.stdout.write('\rEpoch : ' + str(epoch) + ' Loss : ' + str(epoch_loss) + ' Batch size : ' + str(batch_size) \
+       + ' LRate : ' + str(l_rate) + ' DropRate : ' + str(drop_rate) + ' Time : ' + str(tempsEcoule))
     sys.stdout.write('\nTrain : ' + str(res2) + ' Test : ' + str(res3))
     for no in range(n_classes):
       sys.stdout.write(' Test class' + str(no) + ' : ' + str(res[no]))
@@ -215,10 +226,10 @@ with tf.Session() as sess:
       if compteur > 0:
         compteur -= 1
       prec = epoch_loss
-      res2 = accuracy.eval({x:X_train[:batch_size], y:y_train[:batch_size]})
-      res3 = accuracy.eval({x:X_test[:batch_size], y:y_test[:batch_size]})
+      res2 = accuracy.eval({x:X_train[:batch_size], y:y_train[:batch_size], keep_prob: 1})
+      res3 = accuracy.eval({x:X_test[:batch_size], y:y_test[:batch_size], keep_prob: 1})
       for no in range(n_classes):
-        res[no] = accuracy.eval({x:X_testClass[no][:batch_size], y:y_testClass[no][:batch_size]})
+        res[no] = accuracy.eval({x:X_testClass[no][:batch_size], y:y_testClass[no][:batch_size], keep_prob: 1})
       saver.save(sess=sess, save_path=save_path)
     if compteur >= 2:
       compteur = 0
@@ -227,9 +238,10 @@ with tf.Session() as sess:
 
   res2, res = 0, 0
   for g in range(0,len(X_train),batch_size):
-      res2 += accuracy.eval({x:X_train[g:g+batch_size], y:y_train[g:g+batch_size]})
+      res2 += accuracy.eval({x:X_train[g:g+batch_size], y:y_train[g:g+batch_size], keep_prob: 1})
   res2 /= (g/batch_size) + 1
   for g in range(0,len(X_test),batch_size):
-      res += accuracy.eval({x:X_test[g:g+batch_size], y:y_test[g:g+batch_size]})
+      res += accuracy.eval({x:X_test[g:g+batch_size], y:y_test[g:g+batch_size], keep_prob: 1})
   res /= (g/batch_size) + 1
 print('Epoch', epoch,'loss :',epoch_loss,'train :',res2,'test :', res)
+
