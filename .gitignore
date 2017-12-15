@@ -6,12 +6,14 @@ ehthumbs.db
 Desktop.ini
 
 #Folder data
-dataTrain/
-dataTrain_10/
+models/4gestures/dataTrain/
+models/8gestures/dataTrain/
+models/12gestures/dataTrain/
 
 #Folder model
-final_model_5/
-final_model_10/
+models/4gestures/final_model_5/
+models/8gestures/final_model_5/
+models/12gestures/final_model_5/
 
 # Recycle Bin used on file shares
 $RECYCLE.BIN/

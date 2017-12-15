@@ -96,7 +96,7 @@ num_filters2 = 64
 num_filters3 = 128
 
 n_images = 5
-n_classes = 5
+n_classes = 13
 batch_size = 256
 imgSize = 64
 

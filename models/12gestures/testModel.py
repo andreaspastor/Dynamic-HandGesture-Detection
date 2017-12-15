@@ -4,18 +4,8 @@ import cv2
 import random
 import numpy as np
 import os
-from time import time
-import pickle
-import sys
-
-def recup(folder):
-  X_train = np.load('./'+ folder + '/Xtrain.npy')
-  X_test = np.load('./'+ folder + '/Xtest.npy')
-  y_test = np.load('./'+ folder + '/Ytest.npy')
-  y_train = np.load('./'+ folder + '/Ytrain.npy')
-  X_testClass = np.load('./'+ folder + '/XtestClass.npy')
-  y_testClass = np.load('./'+ folder + '/YtestClass.npy')
-  return X_train, y_train, X_test, y_test, X_testClass, y_testClass
+import ctypes
+import time
 
 def new_weights_conv(name,shape):
     return tf.get_variable(name, shape=shape, dtype=tf.float32,
@@ -30,10 +20,10 @@ def new_biases(length):
 
 def new_conv_layer(name,input,              # The previous layer.
                    num_input_channels, # Num. channels in prev. layer.
-                   filter_size,    # Width and height of each filter.
-                   num_filters,    # Number of filters.
-                   dropout,    # Dropout rate
-                   use_pooling=True): # Use 2x2 max-pooling.
+                   filter_size,        # Width and height of each filter.
+                   num_filters,        # Number of filters.
+                   dropout,            # Dropout rate
+                   use_pooling=True):  # Use 2x2 max-pooling.
 
     shape = [filter_size, filter_size, num_input_channels, num_filters]
 
@@ -56,8 +46,7 @@ def new_conv_layer(name,input,              # The previous layer.
                                strides=[1, 2, 2, 1],
                                padding='SAME')
     layer = tf.nn.relu(layer)
-    layer_drop = tf.nn.dropout(layer, dropout, name=name+'_dropout')
-    return layer_drop, weights
+    return layer, weights
   
 def flatten_layer(layer):
     # Get the shape of the input layer.
@@ -80,15 +69,6 @@ def new_fc_layer(name,input,          # The previous layer.
     return layer, weights
 
 
-X_train, y_train, X_test, y_test, X_testClass, y_testClass = 0,0,0,0,0,0#recup('dataTrain')
-"""print(len(X_train), len(X_test))
-
-
-print(X_train[0])
-print('')
-print(y_train[0])"""
-
-input("recuperation done")
 # Convolutional Layer 1.
 filter_size1 = 3
 num_filters1 = 32
@@ -100,9 +80,8 @@ n_classes = 5
 batch_size = 256
 imgSize = 64
 
-keep_prob = tf.placeholder(tf.float32, shape=[], name='dropRate')
-x = tf.placeholder(tf.float32, [None, imgSize, imgSize, n_images], name='input_x')
-x_image = tf.reshape(x, [-1, imgSize, imgSize, n_images], name='input_x_image')
+x = tf.placeholder(tf.float32, [None, imgSize, imgSize, n_images])
+x_image = tf.reshape(x, [-1, imgSize, imgSize, n_images])
 y = tf.placeholder(tf.float32)
 keep_prob = tf.placeholder(tf.float32)
 
@@ -161,22 +140,12 @@ layer_f, weights_f = new_fc_layer("fc",input=layer_flat,
                          num_outputs=n_classes,
                          use_nonlinear=False)
 
-y_pred = tf.nn.softmax(layer_f, name='output_class')
-y_pred_cls = tf.argmax(y_pred, dimension=1, name='output_pred')
-get_test = tf.argmax(y_test,dimension=1)
+y_pred = tf.nn.softmax(layer_f)
+y_pred_cls = tf.argmax(y_pred, dimension=1)
 
 print(layer_conv1a)
 print(layer_flat)
 print(layer_f)
-
-rate = tf.placeholder(tf.float32, shape=[])
-l_rate = 0.0001#5e-4
-drop_rate = 0.75
-beta = 0.001
-cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=layer_f,labels=y)) \
-     + beta * (tf.nn.l2_loss(weights_f))
-
-optimizer = tf.train.AdamOptimizer(rate).minimize(cost)
 
 correct = tf.equal(tf.argmax(layer_f, 1), tf.argmax(y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
@@ -187,65 +156,35 @@ if not os.path.exists(save_dir):
     os.makedirs(save_dir)
 save_path = os.path.join(save_dir, 'best_model')
 
-hm_epochs = 150
-t = time()
-compteur = 0
-prec = 10e100
+
+gestures = ['Swuping Left', 'Swiping Right', 'Swiping Down', \
+            'Swiping Up', 'Doing other things']
+
+cap = cv2.VideoCapture(0)
+t = time.time()
 with tf.Session() as sess:
   sess.run(tf.global_variables_initializer())
   saver.restore(sess=sess, save_path=save_path)
-  saver.save(sess=sess, save_path=save_path)
-  df()
+  imgs = [np.zeros((imgSize,imgSize)) for x in range(5)]
+  while True:
+    ret, image_np = cap.read()
 
+    cv2.imshow('object detection', cv2.resize(image_np, (400,300)))
+    gray_image = cv2.cvtColor(cv2.resize(image_np, (imgSize,imgSize)), cv2.COLOR_BGR2GRAY)
+    gray_image = cv2.equalizeHist(gray_image)
+    imgs.append(gray_image)
+    imgs = imgs[-5:]
+    t2 = time.time()
+    result = y_pred.eval({x:[np.dstack(imgs)], keep_prob: 1})
 
-  res2 = accuracy.eval({x:X_train[:batch_size], y:y_train[:batch_size], keep_prob: 1})
-  res3 = accuracy.eval({x:X_test[:batch_size], y:y_test[:batch_size], keep_prob: 1})
-  res, epoch = [0 for x in range(n_classes)], 0
-  for no in range(n_classes):
-    print(no)
-    res[no] = accuracy.eval({x:X_testClass[no][:batch_size], y:y_testClass[no][:batch_size], keep_prob: 1})
-      
-  while epoch < hm_epochs and sum(res)/len(res) < 0.99:
-    epoch_loss = 0
-    epoch += 1
-    for g in range(0,len(X_train),batch_size):
-      _, c = sess.run([optimizer, cost], feed_dict={keep_prob: 1, rate: l_rate, x: X_train[g:g+batch_size], y: y_train[g:g+batch_size], keep_prob: drop_rate})
-      
-      sys.stdout.write('\r' + str(g) + '/' + str(len(X_train)))
-      sys.stdout.flush()
-      epoch_loss += c
-
-    tempsEcoule = time() - t
-
-    sys.stdout.write('\rEpoch : ' + str(epoch) + ' Loss : ' + str(epoch_loss) + ' Batch size : ' + str(batch_size) \
-       + ' LRate : ' + str(l_rate) + ' DropRate : ' + str(drop_rate) + ' Time : ' + str(tempsEcoule))
-    sys.stdout.write('\nTrain : ' + str(res2) + ' Test : ' + str(res3))
-    for no in range(n_classes):
-      sys.stdout.write(' Test class' + str(no) + ' : ' + str(res[no]))
-    sys.stdout.write('\n')
-    t = time()
-    if epoch_loss > prec:
-      compteur += 1
+    if np.max(result) > 0.7:
+      print(gestures[np.argmax(result)], 1/(time.time() - t), 1/(time.time() - t2))
     else:
-      if compteur > 0:
-        compteur -= 1
-      prec = epoch_loss
-      res2 = accuracy.eval({x:X_train[:batch_size], y:y_train[:batch_size], keep_prob: 1})
-      res3 = accuracy.eval({x:X_test[:batch_size], y:y_test[:batch_size], keep_prob: 1})
-      for no in range(n_classes):
-        res[no] = accuracy.eval({x:X_testClass[no][:batch_size], y:y_testClass[no][:batch_size], keep_prob: 1})
-      saver.save(sess=sess, save_path=save_path)
-    if compteur >= 2:
-      compteur = 0
-      l_rate /= 1.5
-      #batch_size = int(batch_size*1.5)
-
-  res2, res = 0, 0
-  for g in range(0,len(X_train),batch_size):
-      res2 += accuracy.eval({x:X_train[g:g+batch_size], y:y_train[g:g+batch_size], keep_prob: 1})
-  res2 /= (g/batch_size) + 1
-  for g in range(0,len(X_test),batch_size):
-      res += accuracy.eval({x:X_test[g:g+batch_size], y:y_test[g:g+batch_size], keep_prob: 1})
-  res /= (g/batch_size) + 1
-print('Epoch', epoch,'loss :',epoch_loss,'train :',res2,'test :', res)
-
+      print(1/(time.time() - t), 1/(time.time() - t2))
+    
+    waitTime = int((0.3 - time.time() + t)*1000)
+    waitTime = 1 if waitTime < 0 else waitTime
+    t = time.time()
+    if cv2.waitKey(waitTime) & 0xFF == ord('q'):
+      cv2.destroyAllWindows()
+      break
