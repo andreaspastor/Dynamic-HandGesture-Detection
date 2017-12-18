@@ -9,11 +9,15 @@ Desktop.ini
 models/4gestures/dataTrain/
 models/8gestures/dataTrain/
 models/12gestures/dataTrain/
+models/27gestures/dataTrain/
 
 #Folder model
 models/4gestures/final_model_5/
 models/8gestures/final_model_5/
 models/12gestures/final_model_5/
+models/27gestures/final_model_5/
+models/27gestures/final_model_128_2/
+models/27gestures/final_model_128/
 
 # Recycle Bin used on file shares
 $RECYCLE.BIN/
