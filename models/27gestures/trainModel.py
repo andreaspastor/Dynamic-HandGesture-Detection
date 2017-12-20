@@ -174,8 +174,8 @@ print(layer_flat)
 print(layer_f)
 
 rate = tf.placeholder(tf.float32, shape=[])
-l_rate = 0.0001#5e-4
-drop_rate = 0.85
+l_rate = 0.00003#5e-4
+drop_rate = 0.75
 beta = 0.001
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=layer_f,labels=y)) \
      + beta * (tf.nn.l2_loss(weights_f))
@@ -198,7 +198,7 @@ prec = 10e100
 
 with tf.Session() as sess:
   sess.run(tf.global_variables_initializer())
-  #saver.restore(sess=sess, save_path=save_path)
+  saver.restore(sess=sess, save_path=save_path)
   res, epoch = [0 for x in range(n_classes)], 0
   while epoch < hm_epochs and sum(res)/len(res) < 0.99:
     epoch_loss = 0

@@ -10,6 +10,7 @@ from time import time
 
 rlock = RLock()
 
+
 class OpenImage(Thread):
 	""" Thread to open images. """
 	def __init__(self, listA):
@@ -30,7 +31,36 @@ class OpenImage(Thread):
 				self.stacked = [np.dstack(self.imgs),idmove[elm[1]]]		        
 				with rlock:
 					data.append(self.stacked)
-				for x in [-5,5]:
+				for x in [-10,-5,5,10]:#ensemble de rotation à apporter sur les images
+					self.imgs = []
+					for image in self.img[::8]:
+						self.imgs.append(np.array(Image.fromarray(cv2.resize(cv2.imread(image, 0), (imgSize,imgSize))).rotate(x)))
+					self.stacked = [np.dstack(self.imgs),idmove[elm[1]]]		        
+					with rlock:
+						data.append(self.stacked)
+			if len(self.img[::8]) == 6:
+				cptOccur[idmove[elm[1]]] += 1
+				a = r.randint(0,1)
+				b = 1 if not a else 0
+				for image in self.img[::8][a:b]:
+					self.imgs.append(np.array(cv2.resize(cv2.imread(image, 0), (imgSize,imgSize))))
+				self.stacked = [np.dstack(self.imgs),idmove[elm[1]]]		        
+				with rlock:
+					data.append(self.stacked)
+				for x in [-10,-5,5,10]:#ensemble de rotation à apporter sur les images
+					self.imgs = []
+					for image in self.img[::8]:
+						self.imgs.append(np.array(Image.fromarray(cv2.resize(cv2.imread(image, 0), (imgSize,imgSize))).rotate(x)))
+					self.stacked = [np.dstack(self.imgs),idmove[elm[1]]]		        
+					with rlock:
+						data.append(self.stacked)
+			if len(self.img[::8]) == 7:
+				for image in self.img[::8][1:-1]:
+					self.imgs.append(np.array(cv2.resize(cv2.imread(image, 0), (imgSize,imgSize))))
+				self.stacked = [np.dstack(self.imgs),idmove[elm[1]]]		        
+				with rlock:
+					data.append(self.stacked)
+				for x in [-10,-5,5,10]:#ensemble de rotation à apporter sur les images
 					self.imgs = []
 					for image in self.img[::8]:
 						self.imgs.append(np.array(Image.fromarray(cv2.resize(cv2.imread(image, 0), (imgSize,imgSize))).rotate(x)))
@@ -38,22 +68,30 @@ class OpenImage(Thread):
 					with rlock:
 						data.append(self.stacked)
 
+def flipIndex(index):
+	if index in [2,3]:
+		return 2 if index == 3 else 3
+	if index in [7, 8]:
+		return 7 if index == 8 else 7
+	if index in [15, 16]:
+		return 15 if index == 16 else 15
+
 idmove = {'Swiping Left' : 1,
-		  'Swiping Right' : 2,
-		  'Swiping Down' : 3,
+		  'Swiping Right' : 2,#3
+		  'Swiping Down' : 3,#2
 		  'Swiping Up' : 4,
 		  'Pushing Hand Away' : 5,
 		  'Pulling Hand In' : 6,
-		  'Sliding Two Fingers Left' : 7,
-		  'Sliding Two Fingers Right' : 8,
+		  'Sliding Two Fingers Left' : 7,#8
+		  'Sliding Two Fingers Right' : 8,#7
 		  'Sliding Two Fingers Down' : 9,
 		  'Sliding Two Fingers Up' : 10,
 		  'Pushing Two Fingers Away' : 11,
 		  'Pulling Two Fingers In' : 12,
 		  'Rolling Hand Forward' : 13,
 		  'Rolling Hand Backward' : 14,
-		  'Turning Hand Clockwise' : 15,
-		  'Turning Hand Counterclockwise' : 16,
+		  'Turning Hand Clockwise' : 15,#16
+		  'Turning Hand Counterclockwise' : 16,#15
 		  'Zooming In With Full Hand' : 17,
 		  'Zooming Out With Full Hand' : 18,
 		  'Zooming In With Two Fingers' : 19,

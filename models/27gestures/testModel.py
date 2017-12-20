@@ -71,13 +71,13 @@ def new_fc_layer(name,input,          # The previous layer.
 
 # Convolutional Layer 1.
 filter_size1 = 3
-num_filters1 = 32
-num_filters2 = 64
+num_filters1 = 64
+num_filters2 = 96
 num_filters3 = 128
 
 n_images = 5
-n_classes = 5
-batch_size = 256
+n_classes = 27
+batch_size = 96
 imgSize = 64
 
 x = tf.placeholder(tf.float32, [None, imgSize, imgSize, n_images])
@@ -105,31 +105,31 @@ layer_conv1b, weights_conv1b = \
     new_conv_layer("conv1b",input=layer_conv1a1,
                    num_input_channels=num_filters1,
                    filter_size=filter_size1,
-                   num_filters=num_filters1,
+                   num_filters=num_filters2,
                    dropout=keep_prob,
                    use_pooling=False)
 
 layer_conv1b1, weights_conv1b1 = \
     new_conv_layer("conv1b1",input=layer_conv1b,
-                   num_input_channels=num_filters1,
+                   num_input_channels=num_filters2,
                    filter_size=filter_size1,
-                   num_filters=num_filters1,
+                   num_filters=num_filters2,
                    dropout=keep_prob,
                    use_pooling=True)
 
 layer_conv1c, weights_conv1c = \
     new_conv_layer("conv1c",input=layer_conv1b1,
-                   num_input_channels=num_filters1,
+                   num_input_channels=num_filters2,
                    filter_size=filter_size1,
-                   num_filters=num_filters1,
+                   num_filters=num_filters3,
                    dropout=keep_prob,
                    use_pooling=False)
 
 layer_conv1c1, weights_conv1c1 = \
     new_conv_layer("conv1c1",input=layer_conv1c,
-                   num_input_channels=num_filters1,
+                   num_input_channels=num_filters3,
                    filter_size=filter_size1,
-                   num_filters=num_filters1,
+                   num_filters=num_filters3,
                    dropout=keep_prob,
                    use_pooling=True)
 
@@ -151,14 +151,17 @@ correct = tf.equal(tf.argmax(layer_f, 1), tf.argmax(y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
 
 saver = tf.train.Saver()
-save_dir = 'final_model_5/'
+save_dir = 'final_model_128_2/'
 if not os.path.exists(save_dir):
     os.makedirs(save_dir)
 save_path = os.path.join(save_dir, 'best_model')
 
 
-gestures = ['Swuping Left', 'Swiping Right', 'Swiping Down', \
-            'Swiping Up', 'Doing other things']
+gestures = ['Swiping Left','Swiping Right','Swiping Down','Swiping Up','Pushing Hand Away','Pulling Hand In','Sliding Two Fingers Left',\
+            'Sliding Two Fingers Right','Sliding Two Fingers Down','Sliding Two Fingers Up','Pushing Two Fingers Away','Pulling Two Fingers In',\
+            'Rolling Hand Forward','Rolling Hand Backward','Turning Hand Clockwise','Turning Hand Counterclockwise','Zooming In With Full Hand',\
+            'Zooming Out With Full Hand','Zooming In With Two Fingers','Zooming Out With Two Fingers','Thumb Up','Thumb Down','Shaking Hand',\
+            'Stop Sign','Drumming Fingers','No gesture','Doing other things']
 
 cap = cv2.VideoCapture(0)
 t = time.time()
@@ -182,7 +185,7 @@ with tf.Session() as sess:
     else:
       print(1/(time.time() - t), 1/(time.time() - t2))
     
-    waitTime = int((0.3 - time.time() + t)*1000)
+    waitTime = -1#int((0.3 - time.time() + t)*1000)
     waitTime = 1 if waitTime < 0 else waitTime
     t = time.time()
     if cv2.waitKey(waitTime) & 0xFF == ord('q'):
