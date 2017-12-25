@@ -92,7 +92,7 @@ def new_fc_layer(name,input,          # The previous layer.
     return layer, weights
 
 
-X_test, y_test, X_testClass, y_testClass = recupTest('dataTrain',20000)
+#X_test, y_test, X_testClass, y_testClass = recupTest('dataTrain',20000)
 # Convolutional Layer 1.
 filter_size1 = 3
 num_filters1 = 64
@@ -165,13 +165,17 @@ layer_f, weights_f = new_fc_layer("fc",input=layer_flat,
                          num_outputs=n_classes,
                          use_nonlinear=False)
 
+print(keep_prob)
+print(x)
+print(y)
+print(layer_conv1c1)
+print(layer_flat)
+print(layer_f)
+df()
 y_pred = tf.nn.softmax(layer_f, name='output_class')
 y_pred_cls = tf.argmax(y_pred, dimension=1, name='output_pred')
 get_test = tf.argmax(y_test,dimension=1)
 
-print(layer_conv1a)
-print(layer_flat)
-print(layer_f)
 
 rate = tf.placeholder(tf.float32, shape=[])
 l_rate = 0.00003#5e-4
