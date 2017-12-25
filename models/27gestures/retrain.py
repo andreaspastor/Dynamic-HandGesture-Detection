@@ -56,7 +56,7 @@ def new_fc_layer(name,input,          # The previous layer.
 X_test, y_test, X_testClass, y_testClass = recupTest('dataTrain',0)
 
 imgSize = 64
-n_classes = 15
+n_classes = 27
 batch_size = 256
 
 
@@ -108,7 +108,7 @@ with tf.Session() as sess:
   while epoch < hm_epochs and sum(res)/len(res) < 0.99:
     epoch_loss = 0
     epoch += 1
-    for name in [0]:#,15000,40000,60000,80000,100000]:
+    for name in [0, 20000,40000,60000,80000,100000]:
       X_train, y_train = recupTrain('dataTrain', name)
       for g in range(0,len(X_train),batch_size):
         _, c = sess.run([optimizer, cost], feed_dict={keep_prob: 1, rate: l_rate, x: X_train[g:g+batch_size], y: y_train[g:g+batch_size], keep_prob: drop_rate})

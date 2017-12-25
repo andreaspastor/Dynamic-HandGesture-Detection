@@ -17,13 +17,13 @@ models/27gestures/dataTrain/
 models/4gestures/final_model_5/
 models/8gestures/final_model_5/
 models/10gestures/final_model_128_2/
+models/10gestures/final_model_128_2bis/
 models/12gestures/final_model_5/
 models/15gestures/final_model_5/
 models/15gestures/final_model_128_2/
-models/10gestures/final_model_128_2/
-models/27gestures/final_model_5/
+models/15gestures/final_model_128_2bis/
 models/27gestures/final_model_128_2/
-models/27gestures/final_model_128/
+models/27gestures/final_model_128_2bis/
 
 # Recycle Bin used on file shares
 $RECYCLE.BIN/

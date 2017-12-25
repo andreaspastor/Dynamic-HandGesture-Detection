@@ -56,7 +56,7 @@ def new_fc_layer(name,input,          # The previous layer.
 X_test, y_test, X_testClass, y_testClass = recupTest('dataTrain',0)
 
 imgSize = 64
-n_classes = 15
+n_classes = 10
 batch_size = 256
 
 
