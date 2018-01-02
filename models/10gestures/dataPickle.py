@@ -147,6 +147,8 @@ def recup(moves):
 	# Attend que les threads se terminent
 	for thread in threads:
 	    thread.join()
+	    
+	return None
 
 def dataTraitement():
 	global data

@@ -92,7 +92,7 @@ def new_fc_layer(name,input,          # The previous layer.
     return layer, weights
 
 
-#X_test, y_test, X_testClass, y_testClass = recupTest('dataTrain',20000)
+X_test, y_test, X_testClass, y_testClass = recupTest('dataTrain',20000)
 # Convolutional Layer 1.
 filter_size1 = 3
 num_filters1 = 64
