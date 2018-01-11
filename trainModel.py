@@ -92,14 +92,14 @@ def new_fc_layer(name,input,          # The previous layer.
     return layer, weights
 
 
-X_test, y_test, X_testClass, y_testClass = recupTest('dataTrain',0)
+X_test, y_test, X_testClass, y_testClass = recupTest('dataTrain2',0)
 # Convolutional Layer 1.
 filter_size1 = 3
 num_filters1 = 64
 num_filters2 = 96
 num_filters3 = 128
 
-n_images = 5
+n_images = 10
 n_classes = 27
 batch_size = 64
 imgSize = 64
@@ -199,7 +199,7 @@ print(layer_f)
 
 rate = tf.placeholder(tf.float32, shape=[])
 l_rate = 0.00003#5e-4
-drop_rate = 0.85
+drop_rate = 0.8
 beta = 0.001
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=layer_f,labels=y)) \
      + beta * (tf.nn.l2_loss(weights_f))
@@ -210,7 +210,7 @@ correct = tf.equal(tf.argmax(layer_f, 1), tf.argmax(y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
 
 saver = tf.train.Saver()
-save_dir = 'final_model/'
+save_dir = 'final_model-10/'
 if not os.path.exists(save_dir):
     os.makedirs(save_dir)
 save_path = os.path.join(save_dir, 'best_model')
@@ -227,8 +227,8 @@ with tf.Session() as sess:
   while epoch < hm_epochs and sum(res)/len(res) < 0.99:
     epoch_loss = 0
     epoch += 1
-    for name in [0,10000,20000,30000,40000,50000,60000,70000,80000,90000,100000,110000]:
-      X_train, y_train = recupTrain('dataTrain', name)
+    for name in [0,5000,10000,15000,20000,25000,30000,35000,40000,45000,50000,55000,60000,65000,70000,75000,80000,85000,90000,95000,100000,105000,110000,115000]:
+      X_train, y_train = recupTrain('dataTrain2', name)
       for g in range(0,len(X_train),batch_size):
         _, c = sess.run([optimizer, cost], feed_dict={rate: l_rate, x: X_train[g:g+batch_size], y: y_train[g:g+batch_size], keep_prob: drop_rate})
         
@@ -238,7 +238,7 @@ with tf.Session() as sess:
 
       tempsEcoule = time() - t
 
-      sys.stdout.write('\rEpoch : ' + str(epoch) + ' Loss : ' + str(epoch_loss) + ' Batch size : ' + str(batch_size) \
+      sys.stdout.write('\rEpoch : ' + str(epoch) + '.' + str(name) + ' Loss : ' + str(epoch_loss) + ' Batch size : ' + str(batch_size) \
          + ' LRate : ' + str(l_rate) + ' DropRate : ' + str(drop_rate) + ' Time : ' + str(tempsEcoule))
       res2 = accuracy.eval({x:X_train[:batch_size], y:y_train[:batch_size], keep_prob: 1})
       res3 = accuracy.eval({x:X_test[:batch_size], y:y_test[:batch_size], keep_prob: 1})
